@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control Room · Bot Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- ===== Login screen ===== -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-mark">◆</div>
+    <h1>Control Room</h1>
+    <p class="login-sub">Sign in to manage your bot</p>
+    <input id="login-password" type="password" placeholder="Dashboard password" autofocus>
+    <button id="login-btn">Enter</button>
+    <p id="login-error" class="login-error"></p>
+  </div>
+</div>
+
+<!-- ===== App shell ===== -->
+<div id="app" class="app hidden">
+
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">◆</span> Control Room</div>
+    <nav>
+      <button class="nav-item active" data-view="overview">Overview</button>
+      <button class="nav-item" data-view="broadcast">Broadcast</button>
+      <button class="nav-item" data-view="tickets">Tickets</button>
+      <button class="nav-item" data-view="users">Users</button>
+      <button class="nav-item" data-view="settings">Settings</button>
+    </nav>
+    <button id="logout-btn" class="logout-btn">Sign out</button>
+  </aside>
+
+  <main class="main">
+
+    <!-- OVERVIEW -->
+    <section id="view-overview" class="view active">
+      <header class="view-header">
+        <h1>Overview</h1>
+        <div class="pulse-tag"><span class="pulse-dot"></span> live</div>
+      </header>
+
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total users</div>
+          <div class="stat-value" id="stat-total-users">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active today</div>
+          <div class="stat-value" id="stat-active-today">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Open tickets</div>
+          <div class="stat-value" id="stat-open-tickets">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Broadcasts sent</div>
+          <div class="stat-value" id="stat-broadcasts">—</div>
+        </div>
+      </div>
+
+      <div class="panel-row">
+        <div class="panel chart-panel">
+          <h2>Signups · last 14 days</h2>
+          <canvas id="signup-chart" height="140"></canvas>
+        </div>
+
+        <div class="panel feed-panel">
+          <h2>Activity feed</h2>
+          <div id="activity-feed" class="feed"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BROADCAST -->
+    <section id="view-broadcast" class="view">
+      <header class="view-header"><h1>Broadcast</h1></header>
+
+      <div class="panel">
+        <label class="field-label">Message</label>
+        <textarea id="broadcast-message" rows="5" placeholder="Write the message you want to send..."></textarea>
+
+        <div class="field-row">
+          <div class="field">
+            <label class="field-label">Audience</label>
+            <select id="broadcast-segment">
+              <option value="all">All users</option>
+              <option value="active_7d">Active in last 7 days</option>
+              <option value="new_30d">Joined in last 30 days</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Schedule (optional)</label>
+            <input type="datetime-local" id="broadcast-schedule">
+          </div>
+        </div>
+
+        <button id="broadcast-send-btn" class="primary-btn">Send broadcast</button>
+        <p id="broadcast-result" class="hint-text"></p>
+      </div>
+
+      <div class="panel">
+        <h2>History</h2>
+        <table class="data-table">
+          <thead><tr><th>Message</th><th>Audience</th><th>Sent</th><th>Failed</th><th>When</th></tr></thead>
+          <tbody id="broadcast-history-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TICKETS -->
+    <section id="view-tickets" class="view">
+      <header class="view-header"><h1>Support tickets</h1></header>
+      <div class="split">
+        <div class="panel ticket-list">
+          <div id="tickets-list"></div>
+        </div>
+        <div class="panel ticket-detail" id="ticket-detail">
+          <p class="hint-text">Select a ticket to view the conversation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="view-users" class="view">
+      <header class="view-header"><h1>Users</h1></header>
+      <div class="panel">
+        <input id="user-search" type="text" placeholder="Search by name or username..." class="search-input">
+        <table class="data-table">
+          <thead><tr><th>User</th><th>Joined</th><th>Last active</th><th>Status</th><th></th></tr></thead>
+          <tbody id="users-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <header class="view-header"><h1>Settings</h1></header>
+      <div class="panel">
+        <div class="toggle-row">
+          <div>
+            <div class="field-label">Maintenance mode</div>
+            <p class="hint-text">When on, only admins can use the bot — everyone else sees a maintenance notice.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="maintenance-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <label class="field-label">Welcome message</label>
+        <p class="hint-text">Use <code>{name}</code> to insert the user's first name.</p>
+        <textarea id="welcome-message" rows="4"></textarea>
+        <button id="save-settings-btn" class="primary-btn">Save settings</button>
+        <p id="settings-result" class="hint-text"></p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
