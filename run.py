@@ -10,14 +10,18 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN, API_HOST, API_PORT
 from database.db import init_db
 from bot.middlewares import DbSessionMiddleware, MaintenanceMiddleware
-from bot.handlers import start, menu, support, admin
+from bot.handlers import start, menu, support, admin, errors
 from bot.scheduler import run_scheduler
 from api.main import app
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("run")
-
-
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("bot.log", encoding="utf-8"),
+        logging.StreamHandler()
+    ]
+)
 async def build_bot_and_dispatcher() -> tuple[Bot, Dispatcher]:
     if not BOT_TOKEN:
         raise RuntimeError("BOT_TOKEN is not set. Copy .env.example to .env and fill it in.")
@@ -28,11 +32,20 @@ async def build_bot_and_dispatcher() -> tuple[Bot, Dispatcher]:
     # Order matters: DB session must be available before maintenance check runs
     dp.update.middleware(DbSessionMiddleware())
     dp.update.middleware(MaintenanceMiddleware())
-
+    dp.include_router(errors.router)
     dp.include_router(start.router)
     dp.include_router(menu.router)
     dp.include_router(support.router)
     dp.include_router(admin.router)
+    
+    from aiogram.types import BotCommand
+
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Restart the bot"),
+        BotCommand(command="menu", description="Open main menu"),
+        BotCommand(command="help", description="Get help & FAQs"),
+        BotCommand(command="support", description="Contact support"),
+    ])
 
     return bot, dp
 

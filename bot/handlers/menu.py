@@ -1,5 +1,8 @@
 from aiogram import Router, F
 from aiogram.types import CallbackQuery
+from aiogram.filters import Command
+from aiogram.types import Message
+from bot.keyboards import main_menu
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -68,3 +71,13 @@ async def show_invite(callback: CallbackQuery, session: AsyncSession):
     )
     await callback.message.edit_text(text, reply_markup=back_button(), disable_web_page_preview=True)
     await callback.answer()
+
+@router.message(Command("menu"))
+async def cmd_menu(message: Message, session: AsyncSession):
+    result = await session.execute(select(User).where(User.telegram_id == message.from_user.id))
+    user = result.scalar_one_or_none()
+    is_admin = bool(user and user.is_admin)
+    await message.answer(
+        "📋 <b>Main Menu</b>\nChoose an option below:",
+        reply_markup=main_menu(is_admin=is_admin),
+    )
